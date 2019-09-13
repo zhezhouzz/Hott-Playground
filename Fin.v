@@ -29,34 +29,34 @@ Fixpoint fmax (a : nat) :=
 Check (fmax 3).
 Check (fmax 4).
 
-(* Inductive Product (A B:Type) : Type := *)
-(*   Pr : A -> B -> Product A B. *)
+Inductive Product (A B:Type) : Type :=
+  Pr : A -> B -> Product A B.
 
-(* Check (1, 2). *)
-(* Check (Pr 1 2). *)
+Check (Pr nat nat 1 2).
 
+Check prod_ind.
 
 (* Product Type *)
-Definition indProduct (A B: Type) (C: prod A B -> Type) (p: prod A B) (g : A -> B -> C p): C p :=
-  match p with pair a b => g a b end.
+Definition indProduct (A B: Type) (C: Product A B -> Type) (g : forall (a: A) (b: B), C (Pr A B a b)): forall p : Product A B, C p :=
+  fun p => match p with Pr _ _ a b => g a b end.
 
-Definition recProduct (A B: Type) (C: Type) (g : A -> B -> C) : prod A B -> C :=
-  fun p => indProduct A B (fun _ => C) p g.
+Definition recProduct (A B: Type) (C: Type) (g : A -> B -> C) : Product A B -> C :=
+  fun p => indProduct A B (fun _ => C) g p.
 
-Definition pr₁ (A B : Type) : prod A B -> A :=
+Definition pr₁ (A B : Type) : Product A B -> A :=
   recProduct A B A (fun a => fun b => a).
 
-Definition pr₂ (A B : Type) : prod A B -> B :=
+Definition pr₂ (A B : Type) : Product A B -> B :=
   recProduct A B B (fun a => fun b => b).
 
-Definition uniq (A B: Type) (p: prod A B) : Prop :=
-  (pr₁ A B p, pr₂ A B p) = p.
+Definition uniq (A B: Type) (p: Product A B) : Prop :=
+  Pr A B (pr₁ A B p) (pr₂ A B p) = p.
 
-Check (pr₁ nat unit (1, tt)).
-Check (pr₂ nat unit (1, tt)).
-Check (uniq nat unit (1, tt)).
+Check (pr₁ nat unit (Pr nat unit 1 tt)).
+Check (pr₂ nat unit (Pr nat unit 1 tt)).
+Check (uniq nat unit (Pr nat unit 1 tt)).
 
-Example uniqExample : (uniq nat unit (1, tt)).
+Example uniqExample : (uniq nat unit (Pr nat unit 1 tt)).
 Proof.
   reflexivity.
 Qed.
