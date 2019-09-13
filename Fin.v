@@ -17,3 +17,12 @@ Check (Inherit 1 (Cur 0)).
 Check (Cur 2).
 Check (Inherit 2 (Cur 1)).
 Check (Inherit 2 (Inherit 1 (Cur 0))).
+
+Fixpoint fmax (a : nat) :=
+  match a with
+  | 0 => Cur 0
+  | S a => Inherit (S a) (fmax a)
+  end.
+
+Check (fmax 3).
+Check (fmax 4).
