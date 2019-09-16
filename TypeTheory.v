@@ -157,3 +157,49 @@ Definition PrByBoolean (A B: Type) (a: A) (b : B) : ProductByBoolean A B :=
   indBoolean (fun x => recBoolean Type A B x) (fun _ => a) (fun _ => b).
 Definition Pr1ByBoolean (A B: Type) (p: ProductByBoolean A B): A := p b0.
 Definition Pr2ByBoolean (A B: Type) (p: ProductByBoolean A B): B := p b1.
+
+(* nat type *)
+
+Inductive Natural : Type :=
+| n0: Natural
+| nsucc: forall n: Natural, Natural.
+
+(* work around, as coq fixpoint functions require the first arg to be a structurally snaller one. *)
+Definition indNatural (C: Natural -> Type) (g0: C n0) (g1: (forall n: Natural, C n -> C (nsucc n))): forall n: Natural, C n :=
+  fix aux (n: Natural) : C n :=
+    match n with | n0 => g0 | nsucc n' => g1 n' (aux n') end.
+
+Definition recNatural (C: Type) (g0: C) (g1: Natural -> C -> C): Natural -> C :=
+  indNatural (fun _ => C) g0 g1.
+
+Definition addNatural: Natural -> Natural -> Natural :=
+  recNatural (Natural -> Natural) (fun b => b) (fun _ => fun f => fun b => nsucc (f b)).
+
+Definition addProperty0 : forall n, addNatural n0 n = n := fun _ => eq_refl.
+Definition addProperty1 : forall n m, addNatural (nsucc m) n = nsucc (addNatural m n) := fun _ => fun _ => eq_refl.
+
+Definition doubleNatural: Natural -> Natural:=
+  recNatural Natural n0 (fun _ => fun n => nsucc (nsucc n)).
+
+Definition assoc0: forall j k: Natural, addNatural n0 (addNatural j k) = addNatural (addNatural n0 j) k :=
+  fun _ => fun _ => eq_refl.
+
+Definition ap (A B: Type) (f: A -> B) (x y: A) : x = y -> f x = f y.
+Proof.
+  intros.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Print ap.
+
+Definition apSucc (a b: Natural) : a = b -> nsucc a = nsucc b :=
+  ap Natural Natural nsucc a b.
+
+Definition assocs (i : Natural) (h: forall j k: Natural, addNatural i (addNatural j k) = addNatural (addNatural i j) k) : (forall j k: Natural, addNatural (nsucc i) (addNatural j k) = addNatural (addNatural (nsucc i) j) k) :=
+  fun j => fun k => apSucc (addNatural i (addNatural j k)) (addNatural (addNatural i j) k) (h j k).
+
+Definition assoc: forall i, forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k :=
+  indNatural (fun i => forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k) assoc0 assocs.
+
+
