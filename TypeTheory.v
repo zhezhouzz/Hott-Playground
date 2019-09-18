@@ -202,4 +202,64 @@ Definition assocs (i : Natural) (h: forall j k: Natural, addNatural i (addNatura
 Definition assoc: forall i, forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k :=
   indNatural (fun i => forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k) assoc0 assocs.
 
+(* propositions as types *)
 
+Definition LogicTrue : Type := Unit.
+Definition LogicFalse : Type := Empty.
+Definition LogicAnd : Type -> Type -> Type := Product.
+Definition LogicOr : Type -> Type -> Type := Coproduct.
+Definition LogicIf : Type -> Type -> Type := fun A => fun B => A -> B.
+Definition LogicIff : Type -> Type -> Type := fun A => fun B => Product (LogicIf A B) (LogicIf B A).
+Definition LogicNot : Type -> Type := fun A => LogicIf A LogicFalse.
+
+Definition PropExample (A B: Type): LogicIf (LogicAnd (LogicNot A) (LogicNot B)) (LogicNot (Coproduct A B)) :=
+  indProduct (LogicNot A) (LogicNot B) (fun _ => (LogicNot (Coproduct A B)))
+             (fun notA => fun notB => indCoproduct A B (fun _ => LogicFalse)(fun a => match notA a with end) (fun b => match notB b with end)).
+
+Print PropExample.
+
+Definition LogicExists := Sigma.
+
+Definition PropExample2 (A: Type) (P: A -> Type) (Q: A -> Type): (forall x: A, Product (P x) (Q x)) -> (Product (forall x: A, P x) (forall x: A, Q x)) :=
+  fun pre => Pr (forall x: A, P x) (forall x: A, Q x)
+             (fun x => recProduct (P x) (Q x) (P x) (fun x => fun _ => x) (pre x))
+             (fun x => recProduct (P x) (Q x) (Q x) (fun _ => fun y => y) (pre x)).
+
+Definition LessThanEq (n m: Natural): Type := Sigma Natural (fun k => addNatural n k = m).
+
+Print LessThanEq.
+
+Definition LessThan (n m: Natural) : Type := Product (LessThanEq n m) (LogicNot (n = m)).
+Check LessThan.
+
+Definition LteExample : LessThanEq n0 n0 :=
+  Sig Natural (fun k => addNatural n0 k = n0) n0 eq_refl.
+
+Lemma zero_is_not_one: (LogicNot (n0 = (nsucc n0))).
+Proof.
+  unfold LogicNot.
+  unfold LogicIf.
+  intros.
+  inversion H.
+Qed.
+
+Print zero_is_not_one.
+
+Definition LtExample : LessThan n0 (nsucc n0) :=
+  Pr _ _ (Sig Natural (fun k => addNatural n0 k = (nsucc n0)) (nsucc n0) eq_refl) zero_is_not_one.
+
+Definition Semigroup: Type := Sigma Type (fun A => Sigma (A -> A -> A) (fun m => forall x y z: A, m x (m y z) = m (m x y) z)).
+
+Lemma assocNatural: forall x y z : Natural, addNatural x (addNatural y z) = addNatural (addNatural x y) z.
+Proof.
+ intro x.
+  induction x; intros.
+  + reflexivity.
+  + simpl. rewrite (IHx y z). reflexivity.
+Qed.
+
+Definition SemigroupExample: Semigroup :=
+  Sig Type (fun A => Sigma (A -> A -> A) (fun m => forall x y z: A, m x (m y z) = m (m x y) z)) Natural
+      (Sig (Natural -> Natural -> Natural) (fun m => forall x y z: Natural, m x (m y z) = m (m x y) z) addNatural assocNatural).
+
+Print SemigroupExample.
