@@ -44,10 +44,10 @@ Definition recProduct (A B: Type) (C: Type) (g : A -> B -> C) : Product A B -> C
   indProduct A B (fun _ => C) g.
 
 Definition pr1 (A B : Type) : Product A B -> A :=
-  recProduct A B A (fun a => fun b => a).
+  recProduct A B A (fun a b => a).
 
 Definition pr2 (A B : Type) : Product A B -> B :=
-  recProduct A B B (fun a => fun b => b).
+  recProduct A B B (fun a b => b).
 
 Definition uniq (A B: Type) (p: Product A B) : Prop :=
   Pr A B (pr1 A B p) (pr2 A B p) = p.
@@ -87,7 +87,7 @@ Definition recSigma (A: Type) (B: A -> Type) (C: Type) (g: forall a: A, B a -> C
   indSigma A B (fun _ => C) g.
 
 Definition sig1 (A : Type) (B: A -> Type): Sigma A B -> A :=
-  recSigma A B A (fun a => fun b => a).
+  recSigma A B A (fun a b => a).
 
 Definition sig2 (A : Type) (B: A -> Type): forall p: Sigma A B, B (sig1 A B p) :=
   indSigma A B (fun p => B (sig1 A B p)) (fun _ b => b).
@@ -98,8 +98,8 @@ Definition ac (A B: Type) (R: forall (a: A) (b: B), Type) (g: forall (x: A) , Si
 
 Definition MagmaFamily (A: Type): Type := A -> A -> A.
 
-Definition fst (A: Type) : MagmaFamily A := fun a => fun b => a.
-Definition snd (A: Type) : MagmaFamily A := fun a => fun b => b.
+Definition fst (A: Type) : MagmaFamily A := fun a b => a.
+Definition snd (A: Type) : MagmaFamily A := fun a b => b.
 
 (* Magma *)
 Check (Sig Type MagmaFamily nat (fst nat)).
@@ -108,7 +108,7 @@ Check (Sig Type MagmaFamily nat (snd nat)).
 Definition PointedMagmaFamily (A: Type): Type := (A -> A -> A) * A.
 
 Definition natAdd: PointedMagmaFamily nat :=
-  (fun a : nat => fun b: nat => a + b, 0).
+  (fun (a : nat) (b: nat) => a + b, 0).
 
 Check (Sig Type PointedMagmaFamily nat natAdd).
 
@@ -173,16 +173,16 @@ Definition recNatural (C: Type) (g0: C) (g1: Natural -> C -> C): Natural -> C :=
   indNatural (fun _ => C) g0 g1.
 
 Definition addNatural: Natural -> Natural -> Natural :=
-  recNatural (Natural -> Natural) (fun b => b) (fun _ => fun f => fun b => nsucc (f b)).
+  recNatural (Natural -> Natural) (fun b => b) (fun _ f b => nsucc (f b)).
 
 Definition addProperty0 : forall n, addNatural n0 n = n := fun _ => eq_refl.
-Definition addProperty1 : forall n m, addNatural (nsucc m) n = nsucc (addNatural m n) := fun _ => fun _ => eq_refl.
+Definition addProperty1 : forall n m, addNatural (nsucc m) n = nsucc (addNatural m n) := fun _ _ => eq_refl.
 
 Definition doubleNatural: Natural -> Natural:=
-  recNatural Natural n0 (fun _ => fun n => nsucc (nsucc n)).
+  recNatural Natural n0 (fun _ n => nsucc (nsucc n)).
 
 Definition assoc0: forall j k: Natural, addNatural n0 (addNatural j k) = addNatural (addNatural n0 j) k :=
-  fun _ => fun _ => eq_refl.
+  fun _ _ => eq_refl.
 
 Definition ap (A B: Type) (f: A -> B) (x y: A) : x = y -> f x = f y.
 Proof.
@@ -197,7 +197,7 @@ Definition apSucc (a b: Natural) : a = b -> nsucc a = nsucc b :=
   ap Natural Natural nsucc a b.
 
 Definition assocs (i : Natural) (h: forall j k: Natural, addNatural i (addNatural j k) = addNatural (addNatural i j) k) : (forall j k: Natural, addNatural (nsucc i) (addNatural j k) = addNatural (addNatural (nsucc i) j) k) :=
-  fun j => fun k => apSucc (addNatural i (addNatural j k)) (addNatural (addNatural i j) k) (h j k).
+  fun j k => apSucc (addNatural i (addNatural j k)) (addNatural (addNatural i j) k) (h j k).
 
 Definition assoc: forall i, forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k :=
   indNatural (fun i => forall j k, addNatural i (addNatural j k) = addNatural (addNatural i j) k) assoc0 assocs.
@@ -208,13 +208,13 @@ Definition LogicTrue : Type := Unit.
 Definition LogicFalse : Type := Empty.
 Definition LogicAnd : Type -> Type -> Type := Product.
 Definition LogicOr : Type -> Type -> Type := Coproduct.
-Definition LogicIf : Type -> Type -> Type := fun A => fun B => A -> B.
-Definition LogicIff : Type -> Type -> Type := fun A => fun B => Product (LogicIf A B) (LogicIf B A).
+Definition LogicIf : Type -> Type -> Type := fun A B => A -> B.
+Definition LogicIff : Type -> Type -> Type := fun A B => Product (LogicIf A B) (LogicIf B A).
 Definition LogicNot : Type -> Type := fun A => LogicIf A LogicFalse.
 
 Definition PropExample (A B: Type): LogicIf (LogicAnd (LogicNot A) (LogicNot B)) (LogicNot (Coproduct A B)) :=
   indProduct (LogicNot A) (LogicNot B) (fun _ => (LogicNot (Coproduct A B)))
-             (fun notA => fun notB => indCoproduct A B (fun _ => LogicFalse)(fun a => match notA a with end) (fun b => match notB b with end)).
+             (fun notA notB => indCoproduct A B (fun _ => LogicFalse)(fun a => match notA a with end) (fun b => match notB b with end)).
 
 Print PropExample.
 
@@ -222,8 +222,8 @@ Definition LogicExists := Sigma.
 
 Definition PropExample2 (A: Type) (P: A -> Type) (Q: A -> Type): (forall x: A, Product (P x) (Q x)) -> (Product (forall x: A, P x) (forall x: A, Q x)) :=
   fun pre => Pr (forall x: A, P x) (forall x: A, Q x)
-             (fun x => recProduct (P x) (Q x) (P x) (fun x => fun _ => x) (pre x))
-             (fun x => recProduct (P x) (Q x) (Q x) (fun _ => fun y => y) (pre x)).
+             (fun x => recProduct (P x) (Q x) (P x) (fun x _ => x) (pre x))
+             (fun x => recProduct (P x) (Q x) (Q x) (fun _ y => y) (pre x)).
 
 Definition LessThanEq (n m: Natural): Type := Sigma Natural (fun k => addNatural n k = m).
 
@@ -252,7 +252,7 @@ Definition Semigroup: Type := Sigma Type (fun A => Sigma (A -> A -> A) (fun m =>
 
 Lemma assocNatural: forall x y z : Natural, addNatural x (addNatural y z) = addNatural (addNatural x y) z.
 Proof.
- intro x.
+  intro x.
   induction x; intros.
   + reflexivity.
   + simpl. rewrite (IHx y z). reflexivity.
@@ -263,3 +263,44 @@ Definition SemigroupExample: Semigroup :=
       (Sig (Natural -> Natural -> Natural) (fun m => forall x y z: Natural, m x (m y z) = m (m x y) z) addNatural assocNatural).
 
 Print SemigroupExample.
+
+(* identity type. *)
+Inductive Identity (A: Type): A -> A -> Type :=
+| idRefl: forall a: A, Identity A a a.
+
+(* path induction *)
+(* induction rule *)
+Definition indId (A: Type) (C: forall x y: A, Identity A x y -> Type) (f: forall x: A, C x x (idRefl A x)) : forall x y: A, forall p: Identity A x y, C x y p :=
+  fun _ _ p => match p in (Identity _ x' y') return C x' y' p with
+            | idRefl _ a => f a
+            end.
+
+(* indiscernibility of identils *)
+(* rewrite rule *)
+
+Definition idRewrite (A: Type) (C: A -> Type): forall a b: A, forall p: Identity A a b, (C a) -> (C b) :=
+  fun _ _ p => match p in Identity _ a b return C a -> C b with
+               | idRefl _ _ => fun x => x
+               end.
+
+Definition idRewrite' (A: Type) (C: A -> Type): forall a b: A, forall p: Identity A a b, (C a) -> (C b) :=
+  indId A (fun x y _ => C x -> C y) (fun _ => fun x => x).
+
+(* base path induction *)
+
+Definition baseIndId (A: Type) (a: A) (C: forall x: A, Identity A a x -> Type) (c: C a (idRefl A a)) : forall x: A, forall p: Identity A a x, C x p :=
+  fun x p =>
+  (fun _ p => match p in Identity _ a x return forall C': forall x: A, Identity A a x -> Type, forall c: C' a (idRefl A a), C' x p with
+          | idRefl _ _ => fun _ p => p 
+           end) x p C c.
+
+(* baseInd is equivalent with ind *)
+
+Definition baseIndId' (A: Type) (a: A) (C: forall x: A, Identity A a x -> Type) (c: C a (idRefl A a)) (x: A) (p: Identity A a x) : C x p :=
+  (indId A (fun a x p => forall C': forall x: A, Identity A a x -> Type, forall c' : C' a (idRefl A a), C' x p) (fun _ _ p => p)) a x p C c.
+
+Definition indId' (A: Type) (C: forall x y: A, Identity A x y -> Type) (f: forall x: A, C x x (idRefl A x)) : forall x y: A, forall p: Identity A x y, C x y p :=
+  fun x => baseIndId A x (fun y => C x y) (f x).
+
+(* disequality *)
+Definition disequal (A: Type) := forall x y: A, LogicNot (Identity A x y).
