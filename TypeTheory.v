@@ -49,17 +49,15 @@ Definition pr1 (A B : Type) : Product A B -> A :=
 Definition pr2 (A B : Type) : Product A B -> B :=
   recProduct A B B (fun a b => b).
 
-Definition uniq (A B: Type) (p: Product A B) : Prop :=
-  Pr A B (pr1 A B p) (pr2 A B p) = p.
+Definition uniq (A B: Type) (p: Product A B) : Pr A B (pr1 A B p) (pr2 A B p) = p.
+Proof.
+  induction p.
+  reflexivity.
+Qed.
 
 Check (pr1 nat unit (Pr nat unit 1 tt)).
 Check (pr2 nat unit (Pr nat unit 1 tt)).
 Check (uniq nat unit (Pr nat unit 1 tt)).
-
-Example uniqExample : (uniq nat unit (Pr nat unit 1 tt)).
-Proof.
-  reflexivity.
-Qed.
 
 (* dependent pair *)
 
@@ -280,8 +278,8 @@ Definition indId (A: Type) (C: forall x y: A, Identity A x y -> Type) (f: forall
 
 Definition idRewrite (A: Type) (C: A -> Type): forall a b: A, forall p: Identity A a b, (C a) -> (C b) :=
   fun _ _ p => match p in Identity _ a b return C a -> C b with
-               | idRefl _ _ => fun x => x
-               end.
+            | idRefl _ _ => fun x => x
+            end.
 
 Definition idRewrite' (A: Type) (C: A -> Type): forall a b: A, forall p: Identity A a b, (C a) -> (C b) :=
   indId A (fun x y _ => C x -> C y) (fun _ => fun x => x).
@@ -290,9 +288,9 @@ Definition idRewrite' (A: Type) (C: A -> Type): forall a b: A, forall p: Identit
 
 Definition baseIndId (A: Type) (a: A) (C: forall x: A, Identity A a x -> Type) (c: C a (idRefl A a)) : forall x: A, forall p: Identity A a x, C x p :=
   fun x p =>
-  (fun _ p => match p in Identity _ a x return forall C': forall x: A, Identity A a x -> Type, forall c: C' a (idRefl A a), C' x p with
-          | idRefl _ _ => fun _ p => p 
-           end) x p C c.
+    (fun _ p => match p in Identity _ a x return forall C': forall x: A, Identity A a x -> Type, forall c: C' a (idRefl A a), C' x p with
+             | idRefl _ _ => fun _ p => p 
+             end) x p C c.
 
 (* baseInd is equivalent with ind *)
 
@@ -304,3 +302,70 @@ Definition indId' (A: Type) (C: forall x y: A, Identity A x y -> Type) (f: foral
 
 (* disequality *)
 Definition disequal (A: Type) := forall x y: A, LogicNot (Identity A x y).
+
+(* Exercises *)
+
+(* 1.1 *)
+Definition composite {A B C: Type} (g: B -> C) (f: A -> B) : A -> C := fun x => g (f x).
+
+Definition compositeRule {A B C D: Type} (f: A -> B) (g: B -> C) (h: C -> D) : Identity (A -> D) (composite h (composite g f)) (composite (composite h g) f) := idRefl (A -> D) (fun x => h (g (f x))).
+
+(* 1.2 *)
+
+Definition recProduct' (A B: Type) (C: Type) (g : A -> B -> C) : Product A B -> C :=
+  fun p => g (pr1 A B p) (pr2 A B p).
+
+Definition recSigma' (A: Type) (B: A -> Type) (C: Type) (g: forall a: A, B a -> C): forall p: Sigma A B, C :=
+  fun p => g (sig1 A B p) (sig2 A B p).
+
+(* 1.3 *)
+
+Definition indProduct' (A B: Type) (C: Product A B -> Type) (g : forall (a: A) (b: B), C (Pr A B a b)): forall p : Product A B, C p :=
+  fun p => eq_rect (Pr A B (pr1 A B p) (pr2 A B p)) C (g (pr1 A B p) (pr2 A B p)) p (uniq A B p).
+
+Definition sigmaUniq (A: Type)  (B: A -> Type) (p: Sigma A B) : Sig A B (sig1 A B p) (sig2 A B p) = p.
+Proof.
+  induction p.
+  reflexivity.
+Qed.
+
+Definition indSigma' (A: Type) (B: A -> Type) (C: Sigma A B -> Type) (g : forall (a: A) (b: B a), C (Sig A B a b)): forall p : Sigma A B, C p :=
+  fun p => eq_rect (Sig A B (sig1 A B p) (sig2 A B p)) C (g (sig1 A B p) (sig2 A B p)) p (sigmaUniq A B p).
+
+(* 1.4 *)
+
+Definition iter (C: Type) (c0: C) (cs: C -> C) (n: Natural): C :=
+  (fix aux (n: Natural) : C :=
+     match n with
+     | n0 => c0
+     | nsucc n' => cs (aux n')
+     end) n.
+
+Definition recNatural' (C: Type) (g0: C) (g1: Natural -> C -> C): Natural -> C :=
+  fun n => pr2 _ _ (iter (Product Natural C) (Pr _ _ n0 g0) (fun p => Pr _ _ (nsucc (pr1 _ _ p)) (g1 (pr1 _ _ p) (pr2 _ _ p))) n).
+
+Definition recEqrec (C: Type) (g0: C) (g1: Natural -> C -> C) (n: Natural): recNatural C g0 g1 n = recNatural' C g0 g1 n.
+Proof.
+  intros.
+  induction n.
+  + reflexivity.
+  + simpl.
+    rewrite IHn.
+    unfold recNatural'.
+    simpl.
+    clear IHn.
+    assert (forall n, n = (pr1 Natural C
+                          (iter (Product Natural C) (Pr Natural C n0 g0)
+                                (fun p : Product Natural C => Pr Natural C (nsucc (pr1 Natural C p)) (g1 (pr1 Natural C p) (pr2 Natural C p))) n))).
+  - clear n.
+    intros.
+    induction n.
+    * reflexivity.
+    * simpl.
+      rewrite <- IHn.
+      reflexivity.
+  - rewrite <- (H n).
+    reflexivity.
+Qed.
+
+      
