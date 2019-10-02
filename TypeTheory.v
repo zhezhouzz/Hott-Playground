@@ -37,7 +37,9 @@ Check (Pr nat nat 1 2).
 Check prod_ind.
 
 (* Product Type *)
-Definition indProduct (A B: Type) (C: Product A B -> Type) (g : forall (a: A) (b: B), C (Pr A B a b)): forall p : Product A B, C p :=
+Definition indProduct (A B: Type) (C: Product A B -> Type)
+           (g : forall (a: A) (b: B), C (Pr A B a b)):
+  forall p : Product A B, C p :=
   fun p => match p with Pr _ _ a b => g a b end.
 
 Definition recProduct (A B: Type) (C: Type) (g : A -> B -> C) : Product A B -> C :=
@@ -95,9 +97,13 @@ Definition ac (A B: Type) (R: forall (a: A) (b: B), Type) (g: forall (x: A) , Si
 
 
 Definition MagmaFamily (A: Type): Type := A -> A -> A.
+Definition magma : Type := {A: Type & A -> A -> A}.
 
 Definition fst (A: Type) : MagmaFamily A := fun a b => a.
 Definition snd (A: Type) : MagmaFamily A := fun a b => b.
+
+Definition fstm (m : magma) : Type := projT1 m.
+Definition sndm (m : magma) : (let A := fstm m in A -> A -> A) := projT2 m.
 
 (* Magma *)
 Check (Sig Type MagmaFamily nat (fst nat)).
@@ -367,5 +373,3 @@ Proof.
   - rewrite <- (H n).
     reflexivity.
 Qed.
-
-      
