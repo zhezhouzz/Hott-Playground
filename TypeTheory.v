@@ -373,3 +373,45 @@ Proof.
   - rewrite <- (H n).
     reflexivity.
 Qed.
+
+(* 1.5 *)
+
+Definition CoproductByRec2 (A B: Type) : Type := Sigma Boolean (fun b => recBoolean Type A B b).
+
+Definition indCoproductByRec2 (A B: Type) (C: CoproductByRec2 A B -> Type) (p1: forall a: A, C (Sig _ _ b0 a)) (p2: forall b: B, C (Sig _ _ b1 b)): forall c: CoproductByRec2 A B, C c :=
+  indSigma _ _ C (fun b x =>
+                    indBoolean (fun b => forall x, C (Sig Boolean (fun b => recBoolean Type A B b) b x))
+                               (fun u x => Unit_rect (fun u => C (Sig Boolean (fun x : Boolean => recBoolean Type A B x) (Inl Unit Unit u) x)) (p1 x) u)
+                               (fun u x => Unit_rect (fun u => C (Sig Boolean (fun x : Boolean => recBoolean Type A B x) (Inr Unit Unit u) x)) (p2 x) u)
+                               b x
+                 ).
+
+Definition Ex_1_5 (A B: Type) (C: CoproductByRec2 A B -> Type) (p1: forall a: A, C (Sig _ _ b0 a)) (p2: forall b: B, C (Sig _ _ b1 b)) : forall a: A, indCoproductByRec2 A B C p1 p2 (Sig _ _ b0 a) = p1 a := fun _ => eq_refl.
+
+Definition Ex_1_5' (A B: Type) (C: CoproductByRec2 A B -> Type) (p1: forall a: A, C (Sig _ _ b0 a)) (p2: forall b: B, C (Sig _ _ b1 b)) : forall b: B, indCoproductByRec2 A B C p1 p2 (Sig _ _ b1 b) = p2 b := fun _ => eq_refl.
+
+(* 1.6 *)
+
+Definition ProductByRec2 (A B: Type) : Type := forall b: Boolean, recBoolean Type A B b.
+
+Definition PrByRec2 (A B: Type) (x: A) (y: B): ProductByRec2 A B:=
+  indBoolean (fun b => recBoolean Type A B b)
+             (fun _ => x)
+             (fun _ => y).
+
+From Coq Require Import Logic.FunctionalExtensionality.
+
+(* Definition indProductByRec2LemmaEq (A B: Type) (C: (recBoolean Type A B) -> Type) : (forall a b bo, C (PrByRec2 A B a b bo)) = (forall c a b, ProductByRec c a b). *)
+
+(* Definition indProductByRec2Lemma (A B: Type) (C: ProductByRec2 A B -> Type) (a: A) (b: B) (p: C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c:= *)
+(*   fun c => *)
+(*   eq_refl (ProductByRec2 A B) (PrByRec2 A B a b) C p c (a = a).  *)
+
+(* Definition indProductByRec2 (A B: Type) (C: ProductByRec2 A B -> Type) (p: forall a: A, forall b: B, C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c:= *)
+(*   eq_refl _  *)
+
+(* 1.7 *)
+
+(* 1.8 *)
+Definition mulNatural (a b: Natural) : Natural :=
+  Natural_rect (fun _ => Natural -> Natural) (fun _ => n0) (fun a' mul' b => addNatural b (mul' a)) a b.
