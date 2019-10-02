@@ -95,26 +95,18 @@ Definition sig2 (A : Type) (B: A -> Type): forall p: Sigma A B, B (sig1 A B p) :
 Definition ac (A B: Type) (R: forall (a: A) (b: B), Type) (g: forall (x: A) , Sigma B (fun y => R x y)) : Sigma (A -> B) (fun f => forall x: A, R x (f x)):=
   Sig (A -> B) (fun f => forall x: A, R x (f x)) (fun x => sig1 B (fun y => R x y) (g x)) (fun x => sig2 B (fun y => R x y) (g x)).
 
+Definition magma : Type := Sigma Type (fun A => A -> A -> A).
 
-Definition MagmaFamily (A: Type): Type := A -> A -> A.
-Definition magma : Type := {A: Type & A -> A -> A}.
-
-Definition fst (A: Type) : MagmaFamily A := fun a b => a.
-Definition snd (A: Type) : MagmaFamily A := fun a b => b.
-
-Definition fstm (m : magma) : Type := projT1 m.
-Definition sndm (m : magma) : (let A := fstm m in A -> A -> A) := projT2 m.
+Definition fstm (m : magma) : Type := sig1 _ _ m.
+Definition sndm (m : magma) : (let A := fstm m in A -> A -> A) := sig2 _ _ m.
 
 (* Magma *)
-Check (Sig Type MagmaFamily nat (fst nat)).
-Check (Sig Type MagmaFamily nat (snd nat)).
+Definition nat_first : magma := Sig Type (fun A => A -> A -> A) nat (fun a _ => a).
+Definition nat_snd : magma := Sig Type (fun A => A -> A -> A) nat (fun _ b => b).
 
-Definition PointedMagmaFamily (A: Type): Type := (A -> A -> A) * A.
+Definition PointedMagma: Type := Sigma Type (fun A => Product (A -> A -> A) A).
 
-Definition natAdd: PointedMagmaFamily nat :=
-  (fun (a : nat) (b: nat) => a + b, 0).
-
-Check (Sig Type PointedMagmaFamily nat natAdd).
+Definition nat_add: PointedMagma := Sig Type (fun A => Product (A -> A -> A) A) nat (Pr _ _ (fun a b => a + b) 0).
 
 (* coproduct type *)
 
