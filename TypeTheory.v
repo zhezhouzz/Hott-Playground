@@ -393,17 +393,34 @@ Definition PrByRec2 (A B: Type) (x: A) (y: B): ProductByRec2 A B:=
 
 From Coq Require Import Logic.FunctionalExtensionality.
 
-(* Definition indProductByRec2LemmaEq (A B: Type) (C: (recBoolean Type A B) -> Type) : (forall a b bo, C (PrByRec2 A B a b bo)) = (forall c a b, ProductByRec c a b). *)
+Definition Lemma1_6 (A B: Type): forall p: ProductByRec2 A B, PrByRec2 A B (p b0) (p b1) = p :=
+  fun p => functional_extensionality_dep
+          (PrByRec2 A B (p b0) (p b1))
+          p
+          (fun bo => indBoolean (fun bo => (PrByRec2 A B (p b0) (p b1)) bo = p bo)
+                             (Unit_rect (fun u => PrByRec2 A B (p b0) (p b1) (Inl Unit Unit u) = p (Inl Unit Unit u))
+                                        eq_refl
+                             )
+                             (Unit_rect (fun u => PrByRec2 A B (p b0) (p b1) (Inr Unit Unit u) = p (Inr Unit Unit u))
+                                        eq_refl
+                             )
+                             bo).
 
-(* Definition indProductByRec2Lemma (A B: Type) (C: ProductByRec2 A B -> Type) (a: A) (b: B) (p: C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c:= *)
-(*   fun c => *)
-(*   eq_refl (ProductByRec2 A B) (PrByRec2 A B a b) C p c (a = a).  *)
+Definition indProductByRec2 (A B: Type) (C: ProductByRec2 A B -> Type) (p: forall a: A, forall b: B, C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c :=
+  fun c => @eq_rect (ProductByRec2 A B) (PrByRec2 A B (c b0) (c b1)) C (p (c b0) (c b1)) c (Lemma1_6 A B c).
 
-(* Definition indProductByRec2 (A B: Type) (C: ProductByRec2 A B -> Type) (p: forall a: A, forall b: B, C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c:= *)
-(*   eq_refl _  *)
+Lemma eq_back (A: Type) (a: A) (P:A -> Type) (g: P a) (proof: a = a): eq_rect a P g a proof = g.
+Proof.
+  unfold eq_rect.
+  simpl.
+Admitted.
 
-(* 1.7 *)
-
-(* 1.8 *)
-Definition mulNatural (a b: Natural) : Natural :=
-  Natural_rect (fun _ => Natural -> Natural) (fun _ => n0) (fun a' mul' b => addNatural b (mul' a)) a b.
+Definition Eq1_6 (A B: Type) (C: ProductByRec2 A B -> Type) (g: forall a: A, forall b: B, C (PrByRec2 A B a b)) (a: A) (b: B): indProductByRec2 A B C g (PrByRec2 A B a b) = g a b.
+Proof.
+  unfold indProductByRec2.
+  simpl.
+  unfold Lemma1_6.
+  simpl.
+  rewrite eq_back.
+  reflexivity.
+Qed.
