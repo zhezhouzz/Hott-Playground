@@ -148,11 +148,38 @@ Definition InlByBoolean (A B: Type) (a: A) : CoproductByBoolean A B :=
 Definition InrByBoolean (A B: Type) (b: B) : CoproductByBoolean A B :=
   Sig Boolean (fun x: Boolean => recBoolean Type A B x) b1 b.
 
-Definition ProductByBoolean (A B: Type): Type := (forall x: Boolean, recBoolean Type A B x).
-Definition PrByBoolean (A B: Type) (a: A) (b : B) : ProductByBoolean A B :=
+Definition ProductByBoolean (A B: Type): Type :=
+  (forall x: Boolean, recBoolean Type A B x).
+
+Definition PrByBoolean (A B: Type) (a: A) (b : B)
+  : ProductByBoolean A B :=
   indBoolean (fun x => recBoolean Type A B x) (fun _ => a) (fun _ => b).
+
+Definition RecProduct C A B (g : (A -> B -> C)) (p : ProductByBoolean A B) : C :=
+  g (p b0) (p b1).
+
 Definition Pr1ByBoolean (A B: Type) (p: ProductByBoolean A B): A := p b0.
 Definition Pr2ByBoolean (A B: Type) (p: ProductByBoolean A B): B := p b1.
+
+Require Import FunctionalExtensionality.
+
+Theorem pr1_rec : forall A B,
+    Pr1ByBoolean A B = RecProduct A A B (fun a _ => a).
+Proof.
+  intros A B.
+  extensionality p.
+  unfold Pr1ByBoolean.
+  unfold RecProduct.
+  reflexivity.
+Qed.
+
+Theorem pr2_rec : forall A B,
+    Pr2ByBoolean A B = RecProduct B A B (fun _ b => b).
+Proof.
+  intros A B.
+  extensionality p.
+  reflexivity.
+Qed.
 
 (* nat type *)
 
@@ -384,9 +411,11 @@ Definition Ex_1_5' (A B: Type) (C: CoproductByRec2 A B -> Type) (p1: forall a: A
 
 (* 1.6 *)
 
-Definition ProductByRec2 (A B: Type) : Type := forall b: Boolean, recBoolean Type A B b.
+Definition ProductByRec2 (A B: Type) : Type :=
+  forall b: Boolean, recBoolean Type A B b.
 
-Definition PrByRec2 (A B: Type) (x: A) (y: B): ProductByRec2 A B:=
+Definition PrByRec2 (A B: Type) (x: A) (y: B)
+  : ProductByRec2 A B :=
   indBoolean (fun b => recBoolean Type A B b)
              (fun _ => x)
              (fun _ => y).
@@ -414,6 +443,14 @@ Proof.
   unfold eq_rect.
   simpl.
 Admitted.
+
+(* Sorry Pedrotst, I can not compile this part of code. *)
+
+(* Lemma indProductByRec2LemmaEq (A B: Type) *)
+(*            (C: (recBoolean Type A B) -> Type) : *)
+(*   (forall a b bo, C (PrByRec2 A B a b bo)) = *)
+(*   (forall c a b, ProductByRec c a b). *)
+
 
 Definition Eq1_6 (A B: Type) (C: ProductByRec2 A B -> Type) (g: forall a: A, forall b: B, C (PrByRec2 A B a b)) (a: A) (b: B): indProductByRec2 A B C g (PrByRec2 A B a b) = g a b.
 Proof.
