@@ -438,12 +438,6 @@ Definition Lemma1_6 (A B: Type): forall p: ProductByRec2 A B, PrByRec2 A B (p b0
 Definition indProductByRec2 (A B: Type) (C: ProductByRec2 A B -> Type) (p: forall a: A, forall b: B, C (PrByRec2 A B a b)) : forall c: ProductByRec2 A B, C c :=
   fun c => @eq_rect (ProductByRec2 A B) (PrByRec2 A B (c b0) (c b1)) C (p (c b0) (c b1)) c (Lemma1_6 A B c).
 
-Lemma eq_back (A: Type) (a: A) (P:A -> Type) (g: P a) (proof: a = a): eq_rect a P g a proof = g.
-Proof.
-  unfold eq_rect.
-  simpl.
-Admitted.
-
 (* Sorry Pedrotst, I can not compile this part of code. *)
 
 (* Lemma indProductByRec2LemmaEq (A B: Type) *)
@@ -451,13 +445,15 @@ Admitted.
 (*   (forall a b bo, C (PrByRec2 A B a b bo)) = *)
 (*   (forall c a b, ProductByRec c a b). *)
 
+From Coq Require Import Logic.Eqdep.
+
+(* Axiom eq_rect_eq : *)
+(*   forall (U:Type) (p:U) (Q:U -> Type) (x:Q p) (h:p = p), x = eq_rect p Q x p h. *)
 
 Definition Eq1_6 (A B: Type) (C: ProductByRec2 A B -> Type) (g: forall a: A, forall b: B, C (PrByRec2 A B a b)) (a: A) (b: B): indProductByRec2 A B C g (PrByRec2 A B a b) = g a b.
 Proof.
   unfold indProductByRec2.
-  simpl.
   unfold Lemma1_6.
-  simpl.
-  rewrite eq_back.
+  rewrite <- eq_rect_eq.
   reflexivity.
 Qed.
