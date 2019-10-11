@@ -1,48 +1,52 @@
 From HoTT Require Export TypeTheory.
 
-Definition id_inv {A: Type} {x y: A}: (Identity A x y) -> (Identity A y x) :=
-  indId A (fun x y _ => Identity A y x) (fun x => idRefl A x) x y.
-
-Definition id_invSnd {A: Type} {x : A}: (id_inv (idRefl A x)) = idRefl A x := eq_refl.
-
-(* refl_x o refl_x := refl_x *)
-Definition id_comp {A: Type} (x y z: A): (Identity A x y) -> (Identity A y z) -> (Identity A x z) :=
-  fun p =>
-  indId A (fun x y _ => forall z, (Identity A y z) -> (Identity A x z))
-        (indId A (fun x z _ => Identity A x z) (fun x => idRefl A x))
-        x y p z.
-
-(* refl_x o p := p *)
-Definition id_comp' (A: Type) (x y z: A): (Identity A x y) -> (Identity A y z) -> (Identity A x z) :=
-  indId A (fun x y _ => (Identity A y z) -> (Identity A x z))
-        (fun _ => fun x => x) x y.
-
-(* p o refl_x := p *)
-Definition id_comp'' (A: Type) (x y z: A): (Identity A x y) -> (Identity A y z) -> (Identity A x z) :=
-  fun p q =>
-    indId A (fun y z _ => (Identity A x y) -> (Identity A x z)) (fun _ => fun x => x) y z q p.
-
-Definition id_compSnd (A: Type) (x: A): id_comp x x x (idRefl A x) (idRefl A x) = (idRefl A x) := eq_refl.
-
-(* Lemma 2.1.4 *)
+(* Chapter 2.1 *)
 
 Notation "A =t B" := (Identity _ A B) (at level 80, right associativity).
 Notation "=e x" := (idRefl _ x) (at level 80, right associativity).
+
+Definition id_inv {A: Type} {x y: A}: (x =t y) -> (y =t x) :=
+  indId A (fun x y _ => y =t x) (fun x => =e x) x y.
+
 Notation "=~ x" := (id_inv x) (at level 80, right associativity).
+
+Definition id_invSnd {A: Type} {x : A}: (=~ =e x) = =e x := eq_refl.
+
+(* refl_x o refl_x := refl_x *)
+Definition id_comp {A: Type} (x y z: A): (x =t y) -> (y =t z) -> (x =t z) :=
+  fun p =>
+    indId A (fun x y _ => forall z, (y =t z) -> (x =t z))
+          (indId A (fun x z _ => x =t z) (fun x => =e x))
+          x y p z.
+
 Notation "p =o= q" := (id_comp _ _ _ p q) (at level 80, right associativity).
 
-Definition id_comp_1 (A: Type) (x y: A) (p: x =t y): p =t (p =o= (=e y)) :=
-  Identity_rect A (fun x y p => p =t (p =o= (=e y))) (fun x => =e =e x) x y p.
+(* refl_x o p := p *)
+Definition id_comp' (A: Type) (x y z: A): (x =t y) -> (y =t z) -> (x =t z) :=
+  indId A (fun x y _ => (y =t z) -> (x =t z))
+        (fun _ => fun x => x) x y.
+
+(* p o refl_x := p *)
+Definition id_comp'' (A: Type) (x y z: A): (x =t y) -> (y =t z) -> (x =t z) :=
+  fun p q =>
+    indId A (fun y z _ => (x =t y) -> (x =t z)) (fun _ => fun x => x) y z q p.
+
+Definition id_compSnd (A: Type) (x: A): ((=e x) =o= =e x) = (=e x) := eq_refl.
+
+(* Lemma 2.1.4 *)
+
+Definition id_comp_1 (A: Type) (x y: A) (p: x =t y): p =t (p =o= =e y) :=
+  Identity_rect A (fun x y p => p =t (p =o= =e y)) (fun x => =e =e x) x y p.
 
 Definition id_comp_4  (A: Type) (x y z w: A) (p: x =t y) (q: y =t z) (r: z =t w): (p =o= (q =o= r)) =t (p =o= q) =o= r :=
   Identity_rect _
                 (fun x y p => forall (z w: A) (q: y =t z) (r: z =t w), (p =o= (q =o= r)) =t (p =o= q) =o= r)
                 (fun x z w q r =>
                    Identity_rect _
-                                 (fun x z q => forall (w: A) (r: z =t w), ((=e x) =o= (q =o= r)) =t ((=e x) =o= q) =o= r)
+                                 (fun x z q => forall (w: A) (r: z =t w), ((=e x) =o= q =o= r) =t ((=e x) =o= q) =o= r)
                                  (fun x w r =>
                                     Identity_rect _
-                                                  (fun x w r => ((=e x) =o= ((=e x) =o= r)) =t (((=e x) =o= (=e x)) =o= r))
+                                                  (fun x w r => ((=e x) =o= ((=e x) =o= r)) =t (((=e x) =o= =e x) =o= r))
                                                   (fun x => (=e =e x)
                                                   )
                                                   x w r
@@ -57,7 +61,7 @@ Definition Omega2 {A: Type} (a: A) := (=e a) =t (=e a).
 Definition compOmega1{A: Type} (a: A): Omega a -> Omega a -> Omega a := fun o1 o2 => o1 =o= o2.
 Definition compOmega2{A: Type} (a: A): Omega2 a -> Omega2 a -> Omega2 a := fun o1 o2 => o1 =o= o2.
 
-Definition ru {A: Type} {a b: A} (p: a =t b): p =t (p =o= (=e b)) :=
+Definition ru {A: Type} {a b: A} (p: a =t b): p =t (p =o= =e b) :=
   Identity_rect _ (fun a b p => p =t (p =o= (=e b))) (fun a => (=e =e a)) a b p.
 Definition ruSnd {A: Type} {a: A}: ru (=e a) = (=e =e a) := eq_refl.
 Definition lu {A: Type} {a b: A} (p: a =t b): p =t ((=e a) =o= p) :=
