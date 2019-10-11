@@ -1,2 +1,8 @@
+# Agda Binaries
+*.agdai
+*.hi
+*.o
+
+
 *.aux
 Makefile*
