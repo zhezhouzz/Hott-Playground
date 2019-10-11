@@ -104,19 +104,37 @@ Proof.
   admit. (* Lemma_2_1_4_i *)
   rewrite H. clear H.
   apply id_comp with (((=e =e a) =o= alpha) =o= beta =o= =e =e a).
-  admit.
+  apply (@eq_rect _ (=e =e a) (fun x => ((x =o= alpha =o= =e =e a) =o= x =o= beta =o= =e =e a) =t ((=e =e a) =o= alpha) =o= beta =o= =e =e a)); auto.
+  apply id_comp with (((=e =e a) =o= alpha) =o= (=e =e a) =o= beta =o= =e =e a); auto.
   apply id_comp with (((=e =e a) =o= alpha) =o= beta); auto.
 Admitted.
 
 Definition compOmega2Trd {A: Type} (a: A) (alpha beta: Omega2 a): ((comp_l (=e a) beta) =o= (comp_r alpha (=e a))) =t compOmega2 a beta alpha.
 Admitted.
 
-Definition Eckmann_Hilton_Lemma {A: Type} (a: A) (alpha beta: Omega2 a):  (comp_r alpha (=e a) =o= comp_l (=e a) beta) =t comp_l (=e a) beta =o= comp_r alpha (=e a).
-Proof.
-  intros.
-  induction alpha.
-  induction beta.
-Admitted.
+Definition Eckmann_Hilton_Lemma {A: Type} (a: A) (alpha beta: Omega2 a):  (comp_r alpha (=e a) =o= comp_l (=e a) beta) =t comp_l (=e a) beta =o= comp_r alpha (=e a) :=
+  Identity_rect
+    _
+    (fun p1 p2 alpha => forall beta: Omega2 a,  (comp_r alpha (=e a) =o= comp_l p2 beta) =t comp_l p1 beta =o= comp_r alpha (=e a))
+    (fun p beta =>
+       Identity_rect
+         _
+         (fun q1 q2 beta => (comp_r (=e p) q1 =o= comp_l p beta) =t comp_l p beta =o= comp_r (=e p) q2)
+         (fun q =>
+            Identity_rect
+              _
+              (fun _ _ p => forall q, (comp_r (=e p) q =o= comp_l p (=e q)) =t comp_l p (=e q) =o= comp_r (=e p) q)
+              (fun a q =>
+                 Identity_rect
+                   _
+                   (fun a _ q => (comp_r (=e =e a) q =o= comp_l (=e a) (=e q)) =t comp_l (=e a) (=e q) =o= comp_r (=e =e a) q)
+                   (fun a => (=e (=e (=e a))))
+                   a a q
+              )
+              a a p q
+         )
+         (=e a) (=e a) beta
+    ) (=e a) (=e a) alpha beta.
 
 Definition Eckmann_Hilton {A: Type} (a: A) (alpha beta: Omega2 a): compOmega2 a alpha beta =t compOmega2 a beta alpha.
 Proof.
