@@ -149,3 +149,127 @@ Proof.
   apply compOmega2Trd.
 Qed.
 
+(* Chapter 2.2 *)
+
+Definition ap {A B: Type} {x y: A} (f: A -> B) (p: x =t y): (f x) =t (f y) :=
+  Identity_rect _ (fun x y _ => (f x) =t (f y)) (fun x => =e (f x)) x y p.
+
+Definition apSnd {A B: Type} {x: A} (f: A -> B): ap f (=e x) = =e (f x) := eq_refl.
+
+Definition Lemma2_2_2_i {A B C: Type} {x y z: A} (f: A -> B) (g: B -> C) (p: x =t y) (q: y =t z): ap f (p =o= q) =t ((ap f p) =o= (ap f q)) :=
+  Identity_rect
+    _
+    (fun x y p => forall (z: A) (q: y =t z), ap f (p =o= q) =t ((ap f p) =o= (ap f q)))
+    (fun x z q =>
+       Identity_rect
+         _
+         (fun x z q => ap f ((=e x) =o= q) =t ((ap f (=e x)) =o= (ap f q)))
+         (fun x => =e =e (f x))
+         x z q
+    ) x y p z q.
+
+Definition Lemma2_2_2_ii {A B: Type} {x y: A} (f: A -> B) (p: x =t y): ap f (=~ p) =t =~ (ap f p) :=
+  Identity_rect
+    _
+    (fun x y p => ap f (=~ p) =t =~ (ap f p))
+    (fun x => =e =e (f x))
+    x y p.
+
+Definition Lemma2_2_2_iii {A B C: Type} {x y: A} (f: A -> B) (g: B -> C) (p: x =t y): ap g (ap f p) =t (ap (fun x => g (f x)) p) :=
+  Identity_rect
+    _
+    (fun x y p => ap g (ap f p) =t (ap (fun x => g (f x)) p))
+    (fun x => =e =e (g (f x)))
+    x y p.
+
+Definition Lemma2_2_2_iv {A B: Type} {x y: A} (f: A -> B) (p: x =t y): ap (fun x => x) p =t p :=
+  Identity_rect
+    _
+    (fun x y p => ap (fun x => x) p =t p)
+    (fun x => =e =e x)
+    x y p.
+
+(* Chapter 2.3 *)
+
+Definition Transport {A: Type} {P: A -> Type} {x y: A} (p: x =t y): P x -> P y :=
+  Identity_rect
+    _
+    (fun x y p => P x -> P y)
+    (fun _ k => k)
+    x y p.
+
+Definition TransportSnd {A: Type} {P: A -> Type} {x: A}: Transport (=e x) = (fun x: P x => x) := eq_refl.
+
+Notation "=* p" := (Transport p) (at level 80, right associativity).
+
+Notation "pr-1 p" := (sig1 _ _ p) (at level 80, right associativity).
+Notation "pr-2 p" := (sig2 _ _ p) (at level 80, right associativity).
+Notation "sig* x y" := (Sig _ _ x y) (at level 80, right associativity).
+
+Definition lift {A: Type} {P: A -> Type} (e: Sigma A P) {y: A} (p: (pr-1 e) =t y): e =t Sig _ _ y ((=* p) (pr-2 e)) :=
+  Sigma_rect
+    _ _
+    (fun e => forall (y: A) (p: (pr-1 e) =t y), e =t Sig _ _ y ((=* p) (pr-2 e)))
+    (fun x u y p =>
+       Identity_rect
+         _
+         (fun x y p => forall u, (Sig _ _ x u) =t Sig _ _ y ((=* p) u))
+         (fun x u => =e (Sig _ _ x u))
+         x y p u
+    )
+    e y p.
+
+Definition path_lift {A: Type} {P: A -> Type} (e: Sigma A P) {y: A} (p: (pr-1 e) =t y): ap (fun x => sig1 _ _ x) (lift e p) =t p :=
+  Sigma_rect
+    _ _
+    (fun e => forall (y: A) (p: (pr-1 e) =t y), ap (fun x => sig1 _ _ x) (lift e p) =t p)
+    (fun x u y p =>
+       Identity_rect
+         _
+         (fun x y p => forall u, ap (fun x => sig1 _ _ x) (lift (Sig _ _ x u) p) =t p)
+         (fun x _ => =e =e x)
+         x y p u
+    )
+    e y p.
+
+Definition apd {A: Type} {P: A -> Type} {x y: A} (f: forall x: A, P x) (p: x =t y): (=* p) (f x) =t (f y) :=
+  Identity_rect _ (fun x y p => (=* p) (f x) =t (f y)) (fun x => =e (f x)) x y p.
+
+Definition apdSnd {A: Type} {P: A -> Type} {x: A} (f: forall x: A, P x) : apd f (=e x) = =e (f x) := eq_refl.
+
+Definition Transportconst {A: Type} {B: Type} {x y: A} (p: x =t y) (b: B): Transport p b =t b :=
+  Identity_rect _ (fun _ _ p => forall b: B, Transport p b =t b) (fun x b => =e b) x y p b.
+
+Definition Lemma_2_3_8 {A B : Type} (f: A -> B) {x y: A} (p: x =t y): apd f p =t (Transportconst p (f x)) =o= (ap f p) :=
+  Identity_rect
+    _
+    (fun x y p => apd f p =t (Transportconst p (f x)) =o= (ap f p))
+    (fun x => =e =e (f x))
+    x y p.
+
+Definition Lemma_2_3_9 {A: Type} {P: A -> Type} {x y z: A} (p: x =t y) (q: y =t z) (u: P x): (=* q) ((=* p) u) =t (=* p =o= q) u :=
+Identity_rect
+  _
+  (fun x y p => forall (z: A) (q: y =t z) (u: P x), (=* q) ((=* p) u) =t (=* p =o= q) u)
+  (fun x z q u =>
+     Identity_rect
+       _
+       (fun x z q => forall u: P x, (=* q) ((=* =e x) u) =t (=* (=e x) =o= q) u)
+       (fun x u => =e u)
+       x z q u
+  )
+  x y p z q u.
+
+Definition Lemma_2_3_10 {A B: Type} (f: A -> B) (P: B -> Type) {x y: A} (p: x =t y) (u: P (f x)): (@Transport _ (fun x => P (f x)) _ _ p u) =t (=* (ap f p)) u:=
+Identity_rect
+  _
+  (fun x y p => forall u: P (f x), (@Transport _ (fun x => P (f x)) _ _ p u) =t (=* (ap f p)) u)
+  (fun x u => =e u)
+  x y p u.
+
+Definition Lemma_2_3_11 {A: Type} (P Q: A -> Type) (f: forall x: A, P x -> Q x) {x y: A} (p: x =t y) (u: P x): (=* p) (f x u) =t (f y ((=* p) u)) :=
+Identity_rect
+  _
+  (fun x y p => forall u: P x, (=* p) (f x u) =t (f y ((=* p) u)))
+  (fun x u => =e (f x u))
+  x y p u.
